@@ -1,33 +1,67 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react'
 
+import './App.css'
+import Input from './components/Input'
+import Tasks from './components/Tasks'
+import Filter from './components/Filter'
 function App() {
-  const [count, setCount] = useState(0)
+  const [tasks, setTasks] = useState(() => {
+    const storedTasks = localStorage.getItem("tasksSaved");
+    return storedTasks ? JSON.parse(storedTasks) : [];
+  });
+  
+  const [filter, setFilter] = useState('all')
+
+
+  useEffect(() => {
+    const storedTasks = JSON.parse(localStorage.getItem("tasksSaved"))
+    if (storedTasks) {
+      setTasks(storedTasks)
+    }
+  }, [])
+
+  useEffect(() => {
+    console.log("Updating tasks in localStorage:", tasks);
+    localStorage.setItem("tasksSaved", JSON.stringify(tasks));
+  }, [tasks]);
+  
+
+  const addTask = (taskText) => {
+    const newTask = { text: taskText, completed: false }
+    setTasks([...tasks, newTask])
+  }
+
+  const toggleTask = (index) => {
+    const updatedTasks = tasks.map((task, i) =>
+      i === index ? { ...task, completed: !task.completed } : task
+    )
+    setTasks(updatedTasks)
+  }
+  const delTask = (index) => {
+    const updatedTasks = tasks.filter((_, i) => i !== index)
+    setTasks(updatedTasks)
+  }
+
+  const filteredTasks = tasks.filter(task => {
+    if (filter === 'completed') return task.completed
+    if (filter === 'notCompleted') return !task.completed
+    return true
+  })
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+    {/*Wczytywanie komponentów*/}
+      <h1>Lista zadań</h1>
+      {/*Komponent TaskInput*/}
+      <Input addTask={addTask} />
+      {/*Komponent Filter*/}
+      <Filter setFilter={setFilter} />
+      {/*Komponent TaskList*/}
+      <Tasks
+        tasks={filteredTasks}
+        toggleTask={toggleTask}
+        delTask={delTask}
+      />
     </>
   )
 }
